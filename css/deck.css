@@ -1,0 +1,626 @@
+/* ═══════════════════════════════════════════════════════════════
+   Chasis del deck: escenario, plano persistente, carriles, índice.
+   ═══════════════════════════════════════════════════════════════ */
+
+.deck {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--ground);
+}
+
+/* Viñeteado sutil: el plano se hunde en los bordes, como una
+   emulsión de plotter. Sin esto el grafito plano se ve muerto. */
+.deck::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  background: radial-gradient(
+    120% 90% at 50% 42%,
+    transparent 52%,
+    rgba(0, 0, 0, 0.40) 100%
+  );
+}
+
+/* ── El escenario ────────────────────────────────────────────────
+   1600×900 fijo, escalado entero. Un proyector desconocido no
+   puede romper una composición que se escala como una unidad.      */
+.stage-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+/* El escenario mide más que la ventana antes de escalar, y un
+   contenedor no puede centrar un hijo más grande que él mismo:
+   lo clampea al inicio. Combinar translate con scale y un origen
+   centrado deja el resultado dependiendo del orden de composición,
+   así que el encuadre lo calcula deck.js y lo escribe entero.
+   Origen en 0 0 para que la cuenta sea exacta. */
+.stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1600px;
+  height: 900px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* ── El plano persistente ────────────────────────────────────────
+   Vive DETRÁS de todas las slides y no se reinicia entre ellas.
+   Los ejes se quedan quietos; solo se mueven techos y marcadores.  */
+.plane {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.plane svg { width: 100%; height: 100%; display: block; }
+
+.plane[data-mode='quiet']   { opacity: 0.30; }
+.plane[data-mode='present'] { opacity: 1; }
+.plane[data-mode='hero']    { opacity: 1; }
+.plane[data-mode='off']     { opacity: 0; }
+
+/* ── El cerebro ──────────────────────────────────────────────────
+   Ocupa la misma capa que el plano. Está encendido solo en la
+   portada; el resto del tiempo no existe para el compositor.        */
+.cerebro {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--dur-slow) var(--ease), visibility var(--dur-slow) step-end;
+}
+.cerebro[data-on='true'] { opacity: 1; visibility: visible; transition: opacity var(--dur-slow) var(--ease), visibility 0s; }
+.cerebro canvas { width: 1600px; height: 900px; display: block; }
+.plane {
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+/* ── Carriles: el índice expuesto ────────────────────────────────
+   No es una barra de progreso escondida. Se ve cuántas secciones
+   faltan y cómo se sostienen entre sí, todo el tiempo.             */
+.rail {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: var(--rail-w);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--s5) 0;
+  border-right: 1px solid var(--grid-minor);
+  background: linear-gradient(90deg, var(--ground-sink), transparent);
+}
+
+.rail-marks {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  align-items: center;
+}
+
+/* La caja del botón es fija y la marca visible vive en el pseudo,
+   que crece por transform. Animar `width` obligaba a recalcular el
+   layout de las 25 marcas en cada hover: barato, pero es jank en la
+   navegación y esto se maneja con un clicker en vivo. El área de
+   click además queda uniforme y más grande, que es lo que querés
+   cuando alguien pregunta por una slide y tenés que ir. */
+.rail-mark {
+  width: 30px;
+  height: 9px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.rail-mark::before {
+  content: '';
+  width: 30px;
+  height: 2px;
+  background: var(--grid);
+  transform: scaleX(0.40);
+  transition: transform var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease);
+}
+.rail-mark:hover::before { transform: scaleX(0.73); background: var(--ink-3); }
+.rail-mark[data-sec-start='true']::before { transform: scaleX(0.67); background: var(--grid-axis); }
+.rail-mark[aria-current='true']::before {
+  transform: scaleX(1) scaleY(1.5);
+  background: var(--bw);
+}
+.rail-mark[data-seen='true']:not([aria-current='true'])::before { background: var(--hair); }
+
+.rail-count {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  writing-mode: vertical-rl;
+  letter-spacing: 0.14em;
+}
+.rail-count b { color: var(--ink-2); font-weight: 500; }
+
+/* ── Cartucho de leyenda ─────────────────────────────────────────
+   Va DENTRO del cuadrante superior izquierdo del plano, donde un
+   paper de HPC pone la suya. Pegado arriba del titular leía como
+   eyebrow, que es exactamente lo que no puede ser: el cartucho
+   pertenece al instrumento, no al título. deck.js lo ubica según el
+   encuadre vigente. */
+.legend-block {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border-left: 1px solid var(--bw-dim);
+  background: rgba(7, 10, 12, 0.72);
+  pointer-events: none;
+  transition: left var(--dur-plot) var(--ease), top var(--dur-plot) var(--ease),
+              opacity var(--dur) var(--ease), visibility var(--dur) step-end;
+}
+
+/* Solo visible cuando el plano está presentando. En portada y cierre
+   la slide ya lleva destinatario, relevamiento y escala en su pie; con
+   el plano quieto no hay instrumento al que pertenecer. */
+/* Oculto de verdad, no solo transparente: con `opacity: 0` el texto
+   seguía en el árbol de accesibilidad y un lector de pantalla anunciaba
+   un cartucho que no está en pantalla. */
+.legend-block { opacity: 0; visibility: hidden; }
+.deck[data-leyenda='true'] .legend-block {
+  opacity: 1; visibility: visible;
+  transition: left var(--dur-plot) var(--ease), top var(--dur-plot) var(--ease),
+              opacity var(--dur) var(--ease), visibility 0s;
+}
+
+/* ── Aviso momentáneo ───────────────────────────────────────────── */
+.aviso {
+  position: absolute;
+  right: var(--stage-pad-x);
+  top: var(--stage-pad-y);
+  z-index: 55;
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--bw);
+  border: 1px solid var(--bw-dim);
+  background: var(--ground-sink);
+  padding: var(--s2) var(--s3);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.aviso[data-on='true'] { opacity: 1; transform: none; }
+.legend-block .lb-name {
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 600;
+  font-size: var(--t-tick);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.legend-block .lb-meta {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  letter-spacing: 0.04em;
+}
+
+/* ── Slides ─────────────────────────────────────────────────────── */
+.slides {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+/* El padding superior deja pasar el cartucho de leyenda, que vive
+   fijo en el cuadrante superior izquierdo. */
+.slide {
+  position: absolute;
+  inset: 0;
+  padding: calc(var(--stage-pad-y) + 34px) var(--stage-pad-x) var(--s6)
+           calc(var(--rail-w) + var(--s6));
+  display: none;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--s4);
+}
+.slide[data-active='true'] { display: grid; }
+
+/* La entrada no viene de la nada: los bloques ya están, se asientan.
+   El momento autoral es el plano morfando, no cada elemento
+   apareciendo por su cuenta. */
+.slide[data-active='true'] .settle {
+  animation: settle var(--dur) var(--ease) backwards;
+}
+.slide[data-active='true'] .settle:nth-child(1) { animation-delay: 20ms; }
+.slide[data-active='true'] .settle:nth-child(2) { animation-delay: 70ms; }
+.slide[data-active='true'] .settle:nth-child(3) { animation-delay: 120ms; }
+.slide[data-active='true'] .settle:nth-child(4) { animation-delay: 170ms; }
+.slide[data-active='true'] .settle:nth-child(5) { animation-delay: 220ms; }
+.slide[data-active='true'] .settle:nth-child(6) { animation-delay: 270ms; }
+
+@keyframes settle {
+  from { transform: translateY(10px); opacity: 0.35; }
+  to   { transform: none;             opacity: 1; }
+}
+
+/* ── Titulación ─────────────────────────────────────────────────── */
+.slide-head { max-width: 74ch; }
+
+h1.display {
+  margin: 0;
+  font-variation-settings: 'wdth' var(--wd-disp), 'wght' 700;
+  font-size: var(--t-display);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+h2.title {
+  margin: 0;
+  font-variation-settings: 'wdth' var(--wd-disp), 'wght' 700;
+  font-size: var(--t-h1);
+  line-height: 1.0;
+  letter-spacing: -0.030em;
+  text-wrap: balance;
+}
+h3.sub {
+  margin: 0;
+  font-variation-settings: 'wdth' var(--wd-label), 'wght' 600;
+  font-size: var(--t-h3);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  text-wrap: balance;
+}
+
+.lede {
+  margin: 0;
+  max-width: 68ch;
+  font-size: var(--t-h3);
+  line-height: 1.42;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+p { margin: 0 0 var(--s3); max-width: 70ch; text-wrap: pretty; }
+p:last-child { margin-bottom: 0; }
+strong { font-variation-settings: 'wdth' var(--wd-prose), 'wght' 700; color: var(--ink); }
+
+/* Énfasis por peso y tamaño. Nunca por degradado. */
+em.mark {
+  font-style: normal;
+  color: var(--bw);
+  font-variation-settings: 'wdth' var(--wd-prose), 'wght' 600;
+}
+
+/* El cuerpo ocupa la banda central. Cuando el contenido es escaso se
+   centra en vez de colgar del título; cuando llena, esto no hace nada. */
+.slide-body {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.slide-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s5);
+  border-top: 1px solid var(--grid-minor);
+  padding-top: var(--s3);
+}
+.foot-note {
+  font-size: var(--t-small);
+  color: var(--ink-3);
+  max-width: 88ch;
+  margin: 0;
+}
+
+/* ── Nota de contra: la honestidad tiene su propia forma ─────────
+   No es una card. Es una anotación al margen del plano.           */
+.contra {
+  position: relative;
+  padding-left: var(--s5);
+  font-size: var(--t-small);
+  line-height: 1.45;
+  color: var(--ink-2);
+  max-width: 76ch;
+}
+.contra::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0.42em;
+  width: 16px; height: 1px;
+  background: var(--unreach);
+}
+.contra b {
+  color: var(--unreach-text);
+  font-variation-settings: 'wdth' var(--wd-label), 'wght' 600;
+}
+
+/* ── Cifra medida ───────────────────────────────────────────────
+   Cifra, unidad y fecha viajan juntas. Siempre.                   */
+.figure {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+.figure .v {
+  font-family: var(--face-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--t-h1);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.figure .u {
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 500;
+  font-size: var(--t-small);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.figure[data-key='bw']      .v { color: var(--bw); }
+.figure[data-key='medido'] .v { color: var(--medido); }
+.figure[data-key='warn']    .v { color: var(--unreach-text); }
+
+/* ── Índice general ─────────────────────────────────────────────── */
+.overview {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  background: rgba(7, 10, 12, 0.96);
+  padding: var(--s7) var(--s8);
+  overflow: auto;
+  display: none;
+}
+.overview[data-open='true'] { display: block; }
+.ov-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s2) var(--s5);
+  margin-top: var(--s5);
+}
+.ov-sec {
+  grid-column: 1 / -1;
+  margin-top: var(--s5);
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--grid-minor);
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 600;
+  font-size: var(--t-tick);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bw);
+}
+.ov-sec:first-child { margin-top: 0; }
+.ov-item {
+  display: flex;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: var(--s2) var(--s3);
+  background: none;
+  border: 0;
+  border-left: 1px solid transparent;
+  text-align: left;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-small);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease);
+}
+.ov-item:hover { color: var(--ink); border-left-color: var(--bw); background: var(--ground-lift); }
+.ov-item[aria-current='true'] { color: var(--bw); border-left-color: var(--bw); }
+.ov-item .n {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  min-width: 2.4ch;
+}
+
+/* ── Ayuda de teclado ───────────────────────────────────────────── */
+.keys {
+  position: absolute;
+  right: var(--stage-pad-x);
+  bottom: var(--s4);
+  z-index: 40;
+  display: flex;
+  gap: var(--s4);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+  pointer-events: none;
+}
+.deck[data-idle='false'] .keys { opacity: 1; }
+.keys kbd {
+  font: inherit;
+  border: 1px solid var(--grid);
+  padding: 1px 5px;
+  color: var(--ink-3);
+}
+
+/* ── Estado vacío de foto ────────────────────────────────────────
+   Cuando falta una imagen la slide se sostiene sola y dice
+   exactamente qué archivo falta. No hay hueco silencioso.          */
+.photo {
+  position: relative;
+  border: 1px solid var(--grid-minor);
+  background: var(--ground-sink);
+  overflow: hidden;
+  min-height: 132px;
+}
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Antes de resolverse, la figura no ocupa lugar ni muestra nada:
+   el deck no puede parpadear una ruta de archivo en la pantalla. */
+.photo[data-state='empty'],
+.photo[data-state='absent'] { display: none; }
+
+/* Las fotos viven en columnas densas junto al plano: altura acotada
+   para que no desplacen el argumento. */
+.photo[data-state='ok'] { max-height: var(--alto, 136px); }
+.photo[data-state='ok'] img { max-height: var(--alto, 136px); }
+
+/* ── Franja de logos ─────────────────────────────────────────────
+   Contenidos, no recortados; en escala de grises apagada para que
+   no compitan con el color reservado al valor en discusión, y a
+   pleno solo al pasar por encima. */
+.logos {
+  display: flex;
+  align-items: center;
+  gap: var(--s6);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--grid-minor);
+}
+/* Cuando la franja abre la slide, va sin regla arriba y con regla abajo. */
+.stack > .logos:first-child {
+  padding-top: 0;
+  padding-bottom: var(--s4);
+  border-top: 0;
+  border-bottom: 1px solid var(--grid-minor);
+}
+.logos[data-state='empty'],
+.logos[data-state='absent'] { display: none; }
+.logo {
+  display: block;
+  height: 30px;
+}
+.logo img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+  filter: grayscale(1) brightness(1.65) contrast(0.9);
+  opacity: 0.72;
+  transition: filter var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.logo:hover img { filter: none; opacity: 1; }
+
+/* Cintas de llamada sobre la foto: señalan la pieza que importa.
+   Convierten una foto de catálogo en evidencia. */
+.callout {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  pointer-events: none;
+}
+.callout .c-line { width: 34px; height: 1px; background: var(--bw); }
+.callout .c-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--bw);
+  box-shadow: 0 0 0 3px rgba(43, 217, 196, 0.20);
+}
+.callout .c-text {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--ink);
+  background: rgba(11, 14, 17, 0.88);
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+/* ── Escalado responsivo ─────────────────────────────────────────
+   El escenario entero se escala. Nada se reflowea en el proyector. */
+@media (max-width: 720px) {
+  .keys { display: none; }
+  .ov-grid { grid-template-columns: repeat(2, 1fr); }
+  .overview { padding: var(--s5); }
+}
+
+/* Logos negros sobre transparente o sobre blanco: invertidos, y en
+   modo screen para que el fondo blanco invertido (negro) desaparezca
+   contra el grafito. No se tocan los archivos del usuario. */
+.logo--oscuro img {
+  filter: invert(1);
+  mix-blend-mode: screen;
+}
+.logos .logo--oscuro img { filter: invert(1) grayscale(1) brightness(1.65) contrast(0.9); }
+.logos .logo--oscuro:hover img { filter: invert(1); }
+
+/* ── Muro de logos ───────────────────────────────────────────────
+   El logo es el contenido de la slide: grande, a color, con nombre y
+   laboratorio. Una fila por familia, sin cifras.                   */
+.logo-wall {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.logo-wall[data-state='empty'],
+.logo-wall[data-state='absent'] { display: none; }
+.lw-item {
+  display: grid;
+  grid-template-columns: 148px 1fr;
+  gap: var(--s5);
+  align-items: center;
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--grid-minor);
+}
+.lw-item:first-child { border-top: 1px solid var(--grid-minor); }
+.lw-logo {
+  display: grid;
+  place-items: center;
+  height: 58px;
+}
+.lw-logo img {
+  display: block;
+  max-height: 58px;
+  max-width: 148px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+.lw-text { display: flex; flex-direction: column; gap: 2px; }
+.lw-name {
+  font-variation-settings: 'wdth' var(--wd-label), 'wght' 600;
+  font-size: var(--t-h3);
+  line-height: 1.1;
+}
+.lw-lab {
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 500;
+  font-size: var(--t-tick);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.split--logos { grid-template-columns: 1.15fr 1fr; gap: var(--s8); }
+
+/* En el muro el logo es el sujeto: a color pleno, sin el gris de la
+   franja. Los oscuros solo se invierten. */
+.lw-logo img { filter: none; opacity: 1; }
+.lw-logo.logo--oscuro img { filter: invert(1); }
+
+/* Producto sobre fondo transparente: entero, sin recorte, sin caja. */
+.photo[data-fit='contain'] { border: 0; background: none; }
+.photo[data-fit='contain'] img { object-fit: contain; }
+.photo img { object-position: var(--pos, 50% 50%); }
+
+/* Franja a color: cuando el logo es el sujeto y no un acompañante. */
+.logos--color .logo img { filter: none; opacity: 1; }
+.logos--color .logo { height: 44px; }
+
+/* `.logos--color` apaga el filtro de la franja gris, pero un logo negro
+   sobre fondo grafito necesita la inversión igual: se la devolvemos con
+   la especificidad suficiente para ganarle. */
+.logos--color .logo--oscuro img { filter: invert(1); mix-blend-mode: screen; }

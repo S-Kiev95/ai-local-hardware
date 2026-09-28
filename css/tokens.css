@@ -1,0 +1,257 @@
+/* ═══════════════════════════════════════════════════════════════
+   EL TECHO — sistema de diseño
+   Mundo: modelo Roofline de ingeniería de rendimiento HPC.
+   ═══════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('../assets/fonts/archivo-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-stretch: 62% 125%;
+  font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+    U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Archivo';
+  src: url('../assets/fonts/archivo-latin-ext.woff2') format('woff2');
+  font-weight: 400 700;
+  font-stretch: 62% 125%;
+  font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../assets/fonts/jetbrainsmono-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+    U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../assets/fonts/jetbrainsmono-latin-ext.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* ── Sustrato ────────────────────────────────────────────────
+     Grafito, no negro. El negro puro cierra el plano; el grafito
+     deja que el hairline de retícula exista sin gritar.            */
+  --ground:        #0B0E11;
+  --ground-lift:   #11161B;   /* superficies elevadas sobre el plano */
+  --ground-sink:   #070A0C;   /* pozos: celdas de tabla, campos     */
+
+  /* ── Tinta de plano ──────────────────────────────────────────
+     Secundario y terciario se tiñen del azul del sustrato.
+     Nunca gris neutro.                                            */
+  --ink:           #E8EDF2;   /* 16.4:1 */
+  --ink-2:         #9FB0C0;   /*  8.7:1 */
+  --ink-3:         #7C8B99;   /*  5.5:1 */
+  /* Las fechas de observación viven acá, y una fecha ilegible es
+     una fecha que no está. Tiene que pasar 4.5:1 aunque sea el
+     nivel más callado del sistema. */
+  --ink-4:         #6F7E8C;   /*  4.6:1 — texto micro, sigue legible */
+  --hair:          #46545F;   /* trazo puro: barras, marcas, reglas */
+
+  /* ── Retícula ────────────────────────────────────────────────
+     El hairline no desaparece nunca. Es la firma del mundo.        */
+  --grid:          #39424E;
+  --grid-minor:    #1D242C;
+  --grid-axis:     #566575;
+
+  /* ── Los dos techos y lo inalcanzable ────────────────────────
+     Color saturado SOLO para el valor en discusión.
+     Todo lo demás vive en hairline.                               */
+  --bw:            #2BD9C4;   /* rampa diagonal: ancho de banda   */
+  --bw-dim:        #17766B;
+  --bw-wash:       rgba(43, 217, 196, 0.13);
+  /* Ámbar = lo MEDIDO. Nació como techo de cómputo, pero en estos
+     ejes esa rama sale diagonal y paralela a la de memoria, así que
+     no hay horizontal que pintar (ver el bloque CORRECCIÓN DE FÍSICA
+     del contrato). El color quedó donde sí aporta: los puntos medidos
+     por terceros y la banda de eficiencia real. */
+  --medido:       #FFB020;
+  --medido-dim:   #8A6013;
+  --medido-wash:  rgba(255, 176, 32, 0.11);
+  --unreach:       #E0245E;   /* por encima de todo techo          */
+  --unreach-text:  #FF6B92;   /* variante legible en texto chico   */
+  --unreach-wash:  rgba(224, 36, 94, 0.10);
+
+  /* ── Región alcanzable ───────────────────────────────────────
+     Figura llena con identidad propia, no el blanco que sobró.     */
+  --reach:         rgba(43, 217, 196, 0.07);
+  --reach-edge:    rgba(43, 217, 196, 0.30);
+
+  /* ── Tipografía ──────────────────────────────────────────────
+     El eje de ancho de Archivo ES la jerarquía:
+     condensado = medición · normal = prosa · ancho = display       */
+  --face:      'Archivo', system-ui, sans-serif;
+  --face-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --wd-tick:   62;   /* etiquetas de eje, como en un plano real */
+  --wd-label:  78;
+  --wd-prose: 100;
+  --wd-disp:  112;
+
+  /* Escala tipográfica en px de escenario (el escenario mide 1600×900
+     y se escala entero; por eso los px son estables y predecibles). */
+  --t-display: 84px;
+  --t-h1:      50px;
+  --t-h2:      33px;
+  --t-h3:      21px;
+  --t-body:    18px;
+  --t-small:   15px;
+  --t-tick:    12.5px;
+  --t-micro:   11px;
+
+  /* ── Ritmo ───────────────────────────────────────────────────
+     Grupos apretados, separaciones generosas — pero el escenario
+     mide 900 px de alto y el contenido es denso: la generosidad se
+     paga en desborde, no en aire.                                  */
+  --s1: 3px;   --s2: 7px;   --s3: 10px;  --s4: 15px;
+  --s5: 22px;  --s6: 32px;  --s7: 44px;  --s8: 68px;
+
+  --stage-pad-x: 72px;
+  --stage-pad-y: 52px;
+  --rail-w: 52px;
+
+  /* ── Movimiento ──────────────────────────────────────────────
+     Salida exponencial desde un default ya visible.
+     Nada aparece desde la nada.                                    */
+  --ease: cubic-bezier(0.16, 1, 0.30, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --dur-fast: 220ms;
+  --dur:      520ms;
+  --dur-slow: 900ms;
+  --dur-plot: 1100ms;
+
+  /* ── Profundidad ─────────────────────────────────────────────
+     Desplazamiento más desenfoque. Nunca un halo de color a cero.  */
+  --lift-1: 0 2px 6px rgba(0, 0, 0, 0.44);
+  --lift-2: 0 10px 28px rgba(0, 0, 0, 0.52);
+  --lift-3: 0 22px 60px rgba(0, 0, 0, 0.60);
+}
+
+/* El proyector de la sala es una incógnita. Si el sistema pide
+   contraste alto, subimos luminancia, no saturación. */
+@media (prefers-contrast: more) {
+  :root {
+    --ink-2: #C3D2DF;
+    --ink-3: #A7B6C4;
+    --grid: #55616F;
+  }
+}
+
+/* ── Modo sala ───────────────────────────────────────────────────
+   Ningún ajuste del sistema operativo detecta un proyector flojo en
+   una sala iluminada: `prefers-contrast` no se dispara por eso. Va
+   a mano, con la tecla P, y sube luminancia — nunca saturación,
+   porque saturar sobre un proyector lavado empeora la lectura.
+   Los primeros que se pierden son los rótulos apagados y las
+   fuentes; acá se recuperan. */
+.deck[data-sala='true'] {
+  --ground:      #05070A;
+  --ink-2:       #CBD8E4;
+  --ink-3:       #AFBECB;
+  --ink-4:       #93A2AF;
+  --grid:        #5A6775;
+  --grid-minor:  #2C353E;
+  --grid-axis:   #78868F;
+  --bw-dim:      #35A093;
+  --medido-dim: #B98A2A;
+  --reach:       rgba(43, 217, 196, 0.16);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--face);
+  font-variation-settings: 'wdth' var(--wd-prose);
+  font-size: var(--t-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+/* Las superficies que no dibujé también llevan el diseño. */
+::selection { background: var(--bw); color: var(--ground); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--ground-sink); }
+::-webkit-scrollbar-thumb {
+  background: var(--grid);
+  border: 2px solid var(--ground-sink);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--grid-axis); }
+* { scrollbar-color: var(--grid) var(--ground-sink); scrollbar-width: thin; }
+
+:focus-visible {
+  outline: 2px solid var(--bw);
+  outline-offset: 3px;
+}
+
+/* Toda cifra es tabular. En una tabla comparativa las columnas
+   tienen que alinearse solas. */
+.num, .mono {
+  font-family: var(--face-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  letter-spacing: -0.01em;
+}
+
+.tick {
+  font-family: var(--face);
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 500;
+  font-size: var(--t-tick);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* La fecha de observación va pegada al dato, siempre visible.
+   Nunca al pie, nunca en un tooltip. */
+.obs {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  font-weight: 400;
+  color: var(--ink-4);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.obs::before { content: '⟨'; margin-right: 2px; }
+.obs::after  { content: '⟩'; margin-left: 2px; }
+
+.src {
+  font-family: var(--face);
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 400;
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

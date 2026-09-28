@@ -1,0 +1,205 @@
+/* ═══════════════════════════════════════════════════════════════
+   El plano — retícula, techos, región alcanzable, marcadores.
+   Regla de color: saturado SOLO para el valor en discusión.
+   Todo lo demás vive en hairline.
+   ═══════════════════════════════════════════════════════════════ */
+
+.plane .gl { stroke-width: 1; shape-rendering: crispEdges; }
+.plane .gl-minor { stroke: var(--grid-minor); }
+.plane .gl-major { stroke: var(--grid); }
+
+.plane .ax-frame {
+  fill: none;
+  stroke: var(--grid-axis);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.plane .ax-tick {
+  font-family: var(--face-mono);
+  font-size: 13px;
+  fill: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: var(--ground);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.plane .ax-label {
+  font-family: var(--face);
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 600;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  fill: var(--ink-4);
+  paint-order: stroke;
+  stroke: var(--ground);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+/* ── Techos ──────────────────────────────────────────────────────
+   Traslación vertical con salida exponencial. Un techo que se mueve
+   ES el argumento: cambiar de hardware desplaza la recta entera.    */
+.plane .ceil {
+  transition: transform var(--dur-plot) var(--ease),
+              opacity var(--dur) var(--ease);
+}
+
+.plane .ceil-line {
+  fill: none;
+  stroke: var(--bw-dim);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  transition: stroke var(--dur) var(--ease),
+              stroke-width var(--dur) var(--ease);
+}
+.plane .ceil-reach { fill: none; transition: fill var(--dur-slow) var(--ease); }
+.plane .ceil-unreach { fill: none; transition: fill var(--dur-slow) var(--ease); }
+
+/* Por encima del techo no hay nada que comprar: ninguna cantidad de
+   cómputo entrega esos tokens si el ancho de banda no los mueve. */
+.plane .ceil[data-unreach='true'] .ceil-unreach { fill: var(--unreach-wash); }
+
+.plane .ceil-label { transition: x var(--dur-plot) var(--ease), y var(--dur-plot) var(--ease); }
+
+.plane .ceil-label {
+  font-family: var(--face);
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 600;
+  font-size: 13px;
+  letter-spacing: 0.10em;
+  fill: var(--ink-4);
+  transition: fill var(--dur) var(--ease);
+  /* Sin halo, una diagonal que cruza la etiqueta la TACHA y el dato
+     deja de leerse. El halo abre el hueco justo. */
+  paint-order: stroke;
+  stroke: var(--ground);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+
+/* Solo el techo en discusión toma color. */
+.plane .ceil[data-emph='true'] .ceil-line { stroke: var(--bw); stroke-width: 2.5; }
+.plane .ceil[data-emph='true'] .ceil-label { fill: var(--bw); }
+
+
+.plane .ceil[data-tone='warn'] .ceil-line { stroke: var(--unreach); stroke-dasharray: 5 4; }
+.plane .ceil[data-tone='warn'][data-emph='true'] .ceil-label { fill: var(--unreach-text); }
+
+/* La región alcanzable: figura llena con identidad propia, no el
+   blanco que sobró. A valor de aguada desaparecía en proyector, así
+   que lleva relleno y borde propio. */
+.plane .ceil[data-reach='true'] .ceil-reach { fill: rgba(43, 217, 196, 0.09); }
+.plane .ceil[data-reach='true'][data-emph='true'] .ceil-reach {
+  fill: rgba(43, 217, 196, 0.17);
+}
+
+/* ── Banda de eficiencia real ────────────────────────────────────
+   Tres mediciones independientes caen entre 32 % y 38 % del techo.
+   Eso es lo que convierte el plano en predictivo.                  */
+.plane .band-fill { fill: var(--medido-wash); }
+.plane .band-edge {
+  stroke: var(--medido-dim);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+  vector-effect: non-scaling-stroke;
+}
+.plane .band-label {
+  font-family: var(--face);
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 600;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  fill: var(--medido);
+}
+
+/* ── Marcadores ──────────────────────────────────────────────────
+   Cifra, etiqueta y fecha de observación viajan juntas.            */
+.plane .mk {
+  transition: transform var(--dur-plot) var(--ease),
+              opacity var(--dur) var(--ease);
+}
+.plane .mk-halo { fill: var(--ground); stroke: var(--ground); stroke-width: 3; }
+.plane .mk-dot  { fill: var(--ink-3); transition: fill var(--dur) var(--ease), r var(--dur) var(--ease); }
+
+.plane .mk-label {
+  font-family: var(--face);
+  font-variation-settings: 'wdth' var(--wd-label), 'wght' 600;
+  font-size: 14px;
+  fill: var(--ink-2);
+  transition: fill var(--dur) var(--ease);
+  paint-order: stroke;
+  stroke: var(--ground);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.plane .mk-obs {
+  font-family: var(--face-mono);
+  font-size: 11px;
+  fill: var(--ink-4);
+  paint-order: stroke;
+  stroke: var(--ground);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.plane .mk[data-emph='true'] .mk-dot   { fill: var(--bw); r: 6; }
+.plane .mk[data-emph='true'] .mk-label { fill: var(--ink); }
+
+.plane .mk[data-tone='warn'] .mk-dot   { fill: var(--unreach); }
+.plane .mk[data-tone='warn'][data-emph='true'] .mk-label { fill: var(--unreach-text); }
+
+.plane .mk[data-tone='medido'] .mk-dot {
+  fill: var(--medido);
+  stroke: var(--ground);
+  stroke-width: 2;
+}
+.plane .mk[data-tone='medido'][data-emph='true'] .mk-label { fill: var(--medido); }
+
+/* ── Cursor delta ────────────────────────────────────────────────
+   La lectura numérica entre dos puntos. Instrumento, no adorno.    */
+.plane .cur-line, .plane .cur-cap {
+  stroke: var(--ink-2);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.plane .cur-line { stroke-dasharray: 2 3; }
+.plane .cur-read {
+  font-family: var(--face-mono);
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--ground);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+/* En modo quieto el plano baja a puro sustrato: sigue estando,
+   deja de hablar. En portada los rótulos de eje tampoco aparecen:
+   el plano ocupa toda la pantalla y se cruzaban con el titular. */
+.plane[data-mode='quiet'] .mk-label,
+.plane[data-mode='quiet'] .mk-obs,
+.plane[data-mode='quiet'] .ceil-label,
+.plane[data-mode='quiet'] .band-label,
+.plane[data-mode='quiet'] .ax-tick,
+.plane[data-mode='quiet'] .ax-label,
+.plane[data-mode='hero'] .ax-tick,
+.plane[data-mode='hero'] .ax-label { opacity: 0; }
+.plane .mk-label, .plane .mk-obs, .plane .ceil-label,
+.plane .band-label, .plane .ax-tick, .plane .ax-label {
+  transition: opacity var(--dur) var(--ease);
+}
+
+/* Guía que reconecta un punto con su etiqueta cuando hubo que
+   separarla para que no se apile sobre la de al lado. Sin la guía,
+   correr la etiqueta la desvincula del dato que nombra. */
+.plane .mk-guia {
+  fill: none;
+  stroke: var(--ink-4);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: opacity var(--dur) var(--ease);
+}
+.plane .mk-label, .plane .mk-obs {
+  transition: y var(--dur-plot) var(--ease);
+}

@@ -1,0 +1,760 @@
+/* ═══════════════════════════════════════════════════════════════
+   Composiciones por slide.
+   Cada slide toma la forma de su contenido: tablas, escaleras,
+   rieles de comparación, lecturas de instrumento. Nunca la misma
+   tarjeta repetida como estructura de página.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Andamios comunes ───────────────────────────────────────── */
+.stack     { display: flex; flex-direction: column; gap: var(--s4); }
+.stack-sm  { display: flex; flex-direction: column; gap: var(--s2); }
+.stack-lg  { display: flex; flex-direction: column; gap: var(--s5); }
+
+/* La columna izquierda respira; la derecha deja lugar al plano. */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s6);
+  align-items: start;
+}
+
+/* Con el plano presente, el contenido se detiene antes de la caja
+   del plano (que arranca en x=726 del escenario). Con el plano
+   quieto, no hay nada que esquivar y el contenido toma todo. */
+/* 642 px terminaba EXACTO donde arranca el plano (x=726), sin resguardo:
+   los bordes derechos de las tarjetas quedaban debajo del panel y leian
+   como recortados. 596 deja 42 px de aire. */
+.slide[data-layout='default'] .slide-body,
+.slide[data-layout='default'] .slide-head { max-width: 596px; }
+.slide[data-layout='wide']    .slide-body,
+.slide[data-layout='wide']    .slide-head { max-width: none; }
+.slide[data-plotmode='quiet'] .slide-body,
+.slide[data-plotmode='quiet'] .slide-head { max-width: none; }
+/* El cerebro ocupa la derecha igual que el plano: la columna se acota. */
+.slide[data-cerebro='true'] .slide-body,
+.slide[data-cerebro='true'] .slide-head { max-width: 596px; }
+.slide[data-layout='wide'] .split { grid-template-columns: 1fr 1fr; }
+
+/* ── Portada y cierre ───────────────────────────────────────── */
+.slide[data-layout='hero'] {
+  grid-template-rows: 1fr auto;
+  align-content: end;
+  padding-bottom: var(--s8);
+  position: relative;
+}
+
+/* El titular y el instrumento se disputaban el mismo lugar en las
+   slides hero. Se resolvió moviendo el encuadre del plano hacia la
+   derecha (RECTS.hero), no tapándolo con un degradado: un degradado
+   escondía justamente la recta que las sondas nombran. */
+.hero-mark { align-self: end; }
+.hero-mark .display { max-width: 15ch; }
+.hero-sub .lede { max-width: 46ch; margin-top: var(--s4); }
+.hero-meta {
+  display: flex;
+  gap: var(--s6);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--grid-minor);
+  margin-top: var(--s5);
+  max-width: 720px;
+}
+
+/* ── Lista de las tres curvas ───────────────────────────────── */
+.curvas { list-style: none; margin: 0; padding: 0; counter-reset: c; }
+.curvas li {
+  counter-increment: c;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: var(--s4);
+  padding: var(--s4) 0;
+  border-top: 1px solid var(--grid-minor);
+}
+.curvas li::before {
+  content: counter(c);
+  font-family: var(--face-mono);
+  font-size: var(--t-small);
+  color: var(--bw);
+  padding-top: 4px;
+}
+.curvas li > * { grid-column: 2; }
+.curvas li::before { grid-column: 1; grid-row: 1 / span 2; }
+
+/* ── Definiciones del plano ─────────────────────────────────── */
+.legend-def { margin: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.legend-def > div {
+  display: grid;
+  grid-template-columns: 152px 1fr;
+  gap: var(--s3);
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--grid-minor);
+}
+.legend-def dt {
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 600;
+  font-size: var(--t-tick);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bw);
+}
+.legend-def dd { margin: 0; font-size: var(--t-small); color: var(--ink-2); }
+
+.formula {
+  font-family: var(--face-mono);
+  font-size: var(--t-body);
+  color: var(--ink);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--grid);
+  background: var(--ground-sink);
+  max-width: none;
+  letter-spacing: -0.01em;
+}
+
+/* ── Lectura grande ─────────────────────────────────────────── */
+.big-read { display: flex; flex-direction: column; gap: var(--s3); }
+.big-read p { font-size: var(--t-small); color: var(--ink-2); }
+
+/* ── Barras de delta ────────────────────────────────────────── */
+.delta-read { display: flex; flex-direction: column; gap: var(--s2); }
+.dr-row { display: flex; justify-content: space-between; align-items: baseline; }
+.dr-v { font-size: var(--t-h2); font-weight: 700; }
+.dr-v.dim { color: var(--ink-4); }
+.dr-bar { height: 6px; background: var(--ground-sink); border: 1px solid var(--grid-minor); }
+.dr-bar i {
+  display: block; height: 100%;
+  width: calc(var(--f) * 100%);
+  background: var(--hair);
+}
+.dr-bar i.on { background: var(--bw); }
+.delta-read .foot-note { margin-top: var(--s3); }
+
+/* ── Paridad por área ───────────────────────────────────────── */
+/* Área, detalle y estado en UNA línea. Bajar el detalle a un
+   segundo renglón costaba siete líneas de alto y no aportaba nada:
+   el estado ya dice lo mismo. */
+.paridad { list-style: none; margin: 0; padding: 0; }
+.paridad li {
+  display: grid;
+  grid-template-columns: 290px 1fr 132px;
+  gap: var(--s4);
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--grid-minor);
+  align-items: baseline;
+}
+.pa-area { font-variation-settings: 'wdth' var(--wd-prose), 'wght' 600; font-size: var(--t-small); }
+.pa-estado {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  text-align: right;
+  letter-spacing: 0.04em;
+}
+.pa-det { font-size: var(--t-micro); color: var(--ink-4); }
+.paridad li[data-estado='paridad'] .pa-estado { color: var(--bw); }
+.paridad li[data-estado='cerca']   .pa-estado { color: var(--medido); }
+.paridad li[data-estado='acercan'] .pa-estado { color: var(--medido); }
+.paridad li[data-estado='atras']   .pa-estado { color: var(--unreach-text); }
+.paridad li[data-estado='atras'] { background: var(--unreach-wash); }
+.paridad li[data-estado='atras'] .pa-area,
+.paridad li[data-estado='atras'] .pa-estado,
+.paridad li[data-estado='atras'] .pa-det { padding-inline: var(--s3); }
+
+/* ── Lectura de MoE ─────────────────────────────────────────── */
+.moe-read { display: flex; flex-direction: column; gap: var(--s2); }
+.moe-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 128px 46px auto;
+  gap: var(--s3);
+  align-items: center;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--grid-minor);
+  font-size: var(--t-small);
+}
+.mr-name { font-variation-settings: 'wdth' var(--wd-label), 'wght' 600; }
+.mr-bars { position: relative; height: 10px; background: var(--ground-sink); }
+.mr-tot, .mr-act { position: absolute; left: 0; top: 0; height: 100%; }
+.mr-tot { width: calc(var(--f) * 100%); background: var(--grid); }
+.mr-act { width: calc(var(--f) * 100%); background: var(--bw); min-width: 2px; }
+.mr-num { font-size: var(--t-small); color: var(--ink-3); text-align: right; }
+.mr-num b { color: var(--bw); }
+.mr-sep { color: var(--ink-4); padding: 0 4px; }
+.mr-ratio { color: var(--ink); font-weight: 700; text-align: right; }
+.mr-legend { border: 0; padding-top: var(--s2); }
+
+/* ── Tablas ─────────────────────────────────────────────────── */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-small);
+}
+.tbl th {
+  text-align: left;
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 600;
+  font-size: var(--t-tick);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 var(--s3) var(--s2);
+  border-bottom: 1px solid var(--grid);
+  white-space: nowrap;
+}
+.tbl td {
+  padding: var(--s3);
+  border-bottom: 1px solid var(--grid-minor);
+  vertical-align: top;
+}
+.tbl .ta-r { text-align: right; }
+.tbl .dim { color: var(--ink-4); }
+.tbl .accent { color: var(--bw); font-weight: 700; }
+.tbl tr[data-sel='true'] { background: var(--bw-wash); }
+.tbl tr[data-sel='true'] td { border-color: var(--bw-dim); }
+
+.hw-tbl td { font-size: var(--t-small); padding: var(--s1) var(--s3); line-height: 1.35; }
+.hw-mk {
+  display: block;
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  margin-top: 2px;
+}
+.hw-contra { color: var(--ink-3); font-size: var(--t-micro); line-height: 1.45; max-width: 40ch; }
+.hw-tbl tr[data-alerta='precio']    td:nth-child(4) { color: var(--unreach-text); }
+.hw-tbl tr[data-alerta='banda']     td:nth-child(3) { color: var(--unreach-text); }
+.hw-tbl tr[data-estado='prototipo'] { opacity: 0.62; }
+
+.flag {
+  display: inline-block;
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--unreach-text);
+  border: 1px solid var(--unreach);
+  padding: 0 5px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Dos restricciones ──────────────────────────────────────── */
+.two-rule { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); }
+.tr-item {
+  padding: var(--s4);
+  border: 1px solid var(--grid-minor);
+  background: var(--ground-sink);
+  display: flex; flex-direction: column; gap: var(--s2);
+}
+.tr-item[data-emph='true'] {
+  border-color: var(--bw-dim);
+  background: var(--bw-wash);
+}
+.tr-item p { font-size: var(--t-small); color: var(--ink-2); }
+
+/* ── Enfrentamiento directo ─────────────────────────────────── */
+.vs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--s5);
+  align-items: center;
+  padding: var(--s4) 0;
+  border-block: 1px solid var(--grid-minor);
+}
+.vs-side { display: flex; flex-direction: column; gap: var(--s2); }
+.vs-mid .num {
+  font-size: var(--t-h2);
+  font-weight: 700;
+  color: var(--bw);
+}
+
+/* ── Escalera de anchos de banda ────────────────────────────── */
+.ladder { list-style: none; margin: 0; padding: 0; }
+.ladder li {
+  display: grid;
+  grid-template-columns: 190px 1fr 74px 46px 78px auto;
+  gap: var(--s3);
+  align-items: center;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--grid-minor);
+  font-size: var(--t-small);
+}
+.ld-bar { height: 8px; background: var(--ground-sink); }
+.ld-bar i {
+  display: block; height: 100%;
+  width: calc(var(--f) * 100%);
+  background: var(--bw-dim);
+}
+.ladder li:first-child .ld-bar i { background: var(--bw); }
+.ld-name { font-variation-settings: 'wdth' var(--wd-label), 'wght' 600; }
+.ld-bw { text-align: right; font-weight: 700; }
+.ld-mem { text-align: right; color: var(--ink-3); }
+.ladder li[data-proto='true'] { opacity: 0.62; }
+.ladder li[data-proto='true'] .ld-bar i { background: var(--unreach); opacity: 0.5; }
+
+/* ── Movimiento de precio ───────────────────────────────────── */
+.price-move {
+  padding: var(--s4);
+  border: 1px solid var(--grid-minor);
+  background: var(--ground-sink);
+  display: flex; flex-direction: column; gap: var(--s2);
+}
+.pm-row { display: flex; justify-content: space-between; align-items: baseline; }
+.pm-v { font-size: var(--t-h3); font-weight: 700; }
+.pm-v.dim { color: var(--ink-4); }
+.pm-v.warn { color: var(--unreach-text); }
+.pm-track {
+  position: relative;
+  height: 3px;
+  background: var(--ground);
+  border: 1px solid var(--grid-minor);
+}
+.pm-fill {
+  position: absolute; inset: 0 auto 0 0;
+  width: 100%;
+  background: linear-gradient(90deg, var(--hair), var(--unreach));
+}
+
+/* ── Riel de comparación ────────────────────────────────────── */
+.cmp-rail { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); }
+.cr-col {
+  display: flex; flex-direction: column; gap: var(--s1);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--grid-minor);
+}
+.cr-col[data-emph='true'] { border-color: var(--bw-dim); background: var(--bw-wash); }
+.cr-line {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--s3);
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--grid-minor);
+}
+.cr-line .num { font-size: var(--t-small); font-weight: 700; }
+.cr-line .num.ok   { color: var(--bw); }
+.cr-line .num.warn { color: var(--medido); }
+
+/* ── Filas de memoria unificada ─────────────────────────────── */
+.uni-row {
+  display: grid;
+  grid-template-columns: 1fr 92px 108px auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: var(--s3);
+  border: 1px solid var(--grid-minor);
+  font-size: var(--t-small);
+}
+.uni-row[data-emph='true'] { border-color: var(--bw-dim); background: var(--bw-wash); }
+.ur-name { font-variation-settings: 'wdth' var(--wd-label), 'wght' 600; }
+.ur-mem, .ur-bw { text-align: right; font-weight: 700; }
+.uni-row[data-emph='true'] .ur-bw { color: var(--bw); }
+
+/* ── Catálogo de modelos ────────────────────────────────────── */
+.cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s4) var(--s6); }
+.cat { display: flex; flex-direction: column; gap: var(--s1); }
+.cat > p { font-size: var(--t-small); color: var(--ink-2); }
+/* La nota de la cifra baja a su propio renglón: apretada contra el
+   número competía con él y no se leía ninguna de las dos. */
+.cat-fig .figure { flex-direction: column; gap: 2px; align-items: flex-start; }
+.cat-fig .figure .v { font-size: var(--t-h2); }
+.cat-fig .figure .u {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--t-micro);
+  color: var(--ink-3);
+  max-width: 42ch;
+  line-height: 1.35;
+}
+.cat-lic { font-size: var(--t-micro); color: var(--ink-4); letter-spacing: 0.04em; }
+.cat-virtud {
+  font-size: var(--t-micro);
+  color: var(--bw);
+  padding-left: var(--s4);
+  position: relative;
+}
+.cat-virtud::before {
+  content: ''; position: absolute; left: 0; top: 0.5em;
+  width: 12px; height: 1px; background: var(--bw);
+}
+
+/* ── Casos ──────────────────────────────────────────────────── */
+.casos { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s5); }
+.caso { display: flex; flex-direction: column; gap: var(--s2); }
+.caso p { font-size: var(--t-micro); line-height: 1.5; color: var(--ink-2); }
+.caso-stack { color: var(--bw) !important; font-size: var(--t-micro); }
+.caso-huella { color: var(--ink-4); }
+.caso-por { color: var(--ink) !important; }
+.caso-prec {
+  color: var(--ink-4) !important;
+  padding-top: var(--s2);
+  border-top: 1px solid var(--grid-minor);
+}
+
+/* ── Huella de memoria ──────────────────────────────────────── */
+.huella { display: flex; flex-direction: column; }
+.hu-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--grid-minor);
+}
+.hu-row .num { font-weight: 700; }
+.hu-row[data-total='true'] { border-bottom-color: var(--bw-dim); }
+.hu-row[data-total='true'] .num { color: var(--bw); font-size: var(--t-h3); }
+
+/* ── Afirmación destacada ───────────────────────────────────── */
+.claim {
+  padding: var(--s5);
+  border: 1px solid var(--bw-dim);
+  background: var(--bw-wash);
+  display: flex; flex-direction: column; gap: var(--s3);
+}
+.claim[data-tone='warn'] {
+  border-color: var(--unreach);
+  background: var(--unreach-wash);
+}
+.claim p { font-size: var(--t-small); }
+
+/* ── Economía ───────────────────────────────────────────────── */
+.econ { display: flex; flex-direction: column; }
+.ec-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s2) var(--s4);
+  padding: var(--s4) 0;
+  border-bottom: 1px solid var(--grid-minor);
+  align-items: baseline;
+}
+.ec-row .num { font-size: var(--t-h3); font-weight: 700; color: var(--bw); }
+.ec-row .tick:last-child { grid-column: 1 / -1; color: var(--ink-4); }
+.ec-row[data-warn='true'] .num { color: var(--unreach-text); }
+
+/* ── Uruguay ────────────────────────────────────────────────── */
+.leyes { list-style: none; margin: 0; padding: 0; }
+.leyes li {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: var(--s2) var(--s4);
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--grid-minor);
+  align-items: baseline;
+}
+.ley-n { font-size: var(--t-h3); font-weight: 700; color: var(--bw); }
+.ley-q { font-variation-settings: 'wdth' var(--wd-label), 'wght' 600; font-size: var(--t-small); }
+.ley-p { grid-column: 2; font-size: var(--t-micro); color: var(--ink-3); }
+
+.imp { display: flex; flex-direction: column; }
+.im-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--grid-minor);
+}
+.im-row .num { font-weight: 700; font-size: var(--t-h3); }
+.im-row[data-warn='true'] .num { color: var(--medido); }
+
+.ejemplo {
+  padding: var(--s4);
+  border: 1px solid var(--grid);
+  background: var(--ground-sink);
+  display: flex; flex-direction: column; gap: var(--s2);
+}
+.ejemplo .figure .v { font-size: var(--t-h3); }
+.ejemplo .figure .u { text-transform: none; letter-spacing: 0; }
+
+/* ── Instrumento ANII ───────────────────────────────────────── */
+.instrumento { border: 1px solid var(--bw-dim); }
+.in-head {
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--bw-dim);
+  background: var(--bw-wash);
+  display: flex; flex-direction: column; gap: var(--s1);
+}
+.in-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.in-cell {
+  padding: var(--s5);
+  display: flex; flex-direction: column; gap: var(--s2);
+  border-right: 1px solid var(--grid-minor);
+}
+.in-cell:last-child { border-right: 0; }
+.in-v { font-size: var(--t-h2); font-weight: 700; color: var(--bw); line-height: 1; }
+.in-amp {
+  padding: var(--s4) var(--s5);
+  border-top: 1px solid var(--grid-minor);
+  background: var(--ground-sink);
+}
+.in-amp ul { margin: var(--s2) 0 0; padding-left: var(--s4); }
+.in-amp li { font-size: var(--t-small); color: var(--ink-2); }
+
+/* ── Ausencias ──────────────────────────────────────────────── */
+.ausencias {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--s6);
+}
+.ausencias li {
+  position: relative;
+  padding: var(--s3) 0 var(--s3) var(--s5);
+  border-bottom: 1px solid var(--grid-minor);
+  font-size: var(--t-small);
+  color: var(--ink-3);
+}
+.ausencias li::before {
+  content: '';
+  position: absolute; left: 0; top: 1.25em;
+  width: 14px; height: 1px;
+  background: var(--unreach);
+}
+
+/* ── Índice general ─────────────────────────────────────────── */
+.ov-title { font-size: var(--t-h2); }
+
+/* ── Sin JavaScript ─────────────────────────────────────────── */
+.noscript {
+  position: fixed; inset: 0;
+  display: grid; place-content: center;
+  gap: var(--s4);
+  padding: var(--s8);
+  background: var(--ground);
+  z-index: 100;
+}
+.noscript h1 { font-size: var(--t-h2); max-width: 20ch; }
+.noscript p { color: var(--ink-2); }
+.noscript code { font-family: var(--face-mono); color: var(--bw); }
+
+/* ── Angosto: el escenario se escala entero, pero el índice
+      general sí puede reflowear. ───────────────────────────── */
+@media (max-width: 720px) {
+  .ausencias, .cat-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ── Peso del modelo según compresión ───────────────────────────── */
+.peso { display: flex; flex-direction: column; gap: var(--s3); }
+.peso-row {
+  display: grid;
+  grid-template-columns: 132px 1fr 84px;
+  gap: var(--s3);
+  align-items: center;
+}
+.peso-lab {
+  font-variation-settings: 'wdth' var(--wd-tick), 'wght' 500;
+  font-size: var(--t-tick);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.peso-bar { height: 22px; background: var(--ground-sink); border: 1px solid var(--grid-minor); }
+.peso-bar i { display: block; height: 100%; width: calc(var(--f) * 100%); background: var(--hair); }
+.peso-row[data-sel='true'] .peso-bar i { background: var(--bw); }
+.peso-row[data-sel='true'] .peso-lab { color: var(--bw); }
+.peso-gb { text-align: right; font-weight: 700; font-size: var(--t-h3); }
+.peso-row[data-sel='true'] .peso-gb { color: var(--bw); }
+
+
+/* ── Subida de precios ───────────────────────────────────────────
+   Lista → calle, con el delta en crimson. Es la prueba de la
+   «crisis de la RAM», no una afirmación.                            */
+.subida { display: flex; flex-direction: column; gap: var(--s3); }
+.su-row {
+  display: grid;
+  grid-template-columns: 1fr 96px 26px 148px 86px auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--grid-minor);
+  font-size: var(--t-small);
+}
+.su-name { font-variation-settings: 'wdth' var(--wd-label), 'wght' 600; }
+.su-mk {
+  display: block;
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--ink-4);
+  font-weight: 400;
+}
+.su-from { color: var(--ink-4); text-align: right; }
+.su-arrow {
+  height: 1px;
+  background: linear-gradient(90deg, var(--hair), var(--unreach));
+  align-self: center;
+}
+.su-to { color: var(--ink); font-weight: 700; text-align: right; }
+.su-delta { color: var(--unreach-text); font-weight: 700; text-align: right; }
+
+
+/* ── Hardware NVIDIA: dos fotos apiladas + tabla con historial ──── */
+.split--fotos { grid-template-columns: 0.8fr 1.2fr; gap: var(--s7); }
+.fotos-2 { display: flex; flex-direction: column; gap: var(--s3); }
+.fotos-2 .photo[data-state='ok'] { max-height: var(--alto, 236px); }
+.fotos-2 .photo[data-state='ok'] img { max-height: var(--alto, 236px); }
+.nv-tbl td { vertical-align: top; }
+.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.hist li {
+  display: grid;
+  grid-template-columns: 92px 74px 1fr;
+  gap: var(--s3);
+  align-items: baseline;
+  font-size: var(--t-micro);
+  color: var(--ink-3);
+}
+.hi-p { color: var(--ink-2); }
+.hi-f { font-family: var(--face-mono); color: var(--ink-4); }
+.hist li[data-hoy='true'] .hi-p { color: var(--ink); font-weight: 700; font-size: var(--t-small); }
+.hi-delta {
+  display: inline-block;
+  margin-top: var(--s2);
+  color: var(--unreach-text);
+  font-weight: 700;
+}
+.nv-tbl tr[data-alerta='banda'] td:nth-child(3) { color: var(--unreach-text); }
+
+.nv-tbl tr[data-ref='true'] td { color: var(--ink-3); }
+.nv-tbl tr[data-ref='true'] .hi-delta,
+.nv-tbl tr[data-ref='true'] .hist li[data-hoy='true'] .hi-p { color: var(--ink-3); }
+
+.flag-txt { color: var(--unreach-text); }
+
+
+/* ── Antes → ahora ───────────────────────────────────────────────
+   Tres cambios cuando el modelo corre en tu equipo. Izquierda apagado
+   (lo que se deja), derecha pleno (lo que se gana).                 */
+.cambios { list-style: none; margin: 0; padding: 0; }
+.cambios li {
+  display: grid;
+  grid-template-columns: 1fr 34px 1fr;
+  gap: var(--s3);
+  align-items: center;
+  padding: var(--s4) 0;
+  border-top: 1px solid var(--grid-minor);
+  font-size: var(--t-small);
+}
+.cb-antes { color: var(--ink-3); }
+.cb-flecha { height: 1px; background: linear-gradient(90deg, var(--hair), var(--bw)); }
+.cb-ahora { color: var(--ink); }
+
+/* ── Noticia ────────────────────────────────────────────────────── */
+.noticia {
+  display: flex; flex-direction: column; gap: var(--s3);
+  padding: var(--s5);
+  border: 1px solid var(--bw-dim);
+  background: var(--bw-wash);
+}
+.noticia .logos { border-top: 0; padding-top: 0; }
+.noticia .logo { height: 34px; }
+.noticia .logo img { filter: none; opacity: 1; }
+.noticia p { font-size: var(--t-small); }
+.noticia .figure .v { font-size: var(--t-h2); }
+
+
+/* ── Barras comparativas ─────────────────────────────────────────
+   Nombre, riel, cifra. El riel siempre mide lo mismo, así que la
+   comparación es la longitud y no hay que leer los números para ver
+   quién gana. Escala desde cero: ver `barras()` en slides.js.       */
+.barras { display: flex; flex-direction: column; gap: 5px; }
+
+.barra {
+  display: grid;
+  grid-template-columns: 158px 1fr auto;
+  align-items: center;
+  gap: var(--s3);
+  font-size: var(--t-small);
+}
+.barra:has(.ba-c) { grid-template-columns: 170px 1fr auto 44px; }
+
+.ba-m { color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ba-t { height: 11px; background: var(--ground-sink); border-left: 1px solid var(--grid-minor); }
+.ba-f {
+  display: block; width: 100%; height: 100%;
+  background: var(--hair);
+  /* El largo va por scaleX y no por width: quince barras animando una
+     propiedad de layout obligan a recalcular la columna entera en cada
+     cambio de slide. `--f` es la fracción del máximo, la calcula
+     `barras()` en slides.js. */
+  transform-origin: 0 50%;
+  transform: scaleX(var(--f, 0));
+  transition: transform var(--dur-plot) var(--ease);
+}
+.ba-v { color: var(--ink-2); font-size: var(--t-tick); }
+.ba-c { color: var(--ink-4); font-size: var(--t-tick); text-align: right; }
+
+.barra[data-abierto='true'] .ba-f { background: var(--bw-dim); }
+.barra[data-foco='true'] .ba-f { background: var(--bw); }
+.barra[data-foco='true'] .ba-m { color: var(--ink); font-variation-settings: 'wght' 600; }
+.barra[data-foco='true'] .ba-v { color: var(--bw); }
+
+/* Leyenda: dos muestras del mismo alto que las barras, no puntos. */
+.ba-leyenda { color: var(--ink-4); display: flex; align-items: center; gap: var(--s2); }
+.ba-leyenda span { width: 22px; height: 8px; display: inline-block; }
+.ba-leyenda span[data-abierto='true'] { background: var(--bw); }
+.ba-leyenda span[data-abierto='false'] { background: var(--hair); }
+.ba-leyenda span:not(:first-child) { margin-left: var(--s3); }
+
+/* ── Catálogo Qwen ───────────────────────────────────────────────
+   La licencia manda: la fila que no se puede facturar se marca en
+   ámbar, que en este deck es el color de "medido, con reparos".     */
+.qw-tbl .qw-lic { font-size: var(--t-tick); color: var(--bw); white-space: nowrap; }
+.qw-tbl tr[data-libre='false'] .qw-lic { color: var(--medido); }
+.qw-tbl tr[data-libre='false'] .hw-mk { color: var(--medido-dim); }
+
+/* Tono `gasto`: la longitud es plata que sale, no mérito. En teal una
+   barra larga se lee como "gana", que es exactamente lo contrario de
+   lo que dice un costo — así que el riel pasa a ámbar y el foco solo
+   marca de quién es la fila. */
+.barras[data-tono='gasto'] .ba-f { background: var(--medido-dim); }
+.barras[data-tono='gasto'] .barra[data-foco='true'] .ba-f { background: var(--medido); }
+.barras[data-tono='gasto'] .barra[data-foco='true'] .ba-v { color: var(--medido); }
+
+/* Fila sin proveedor: el riel queda vacío a propósito. La ausencia de
+   barra ES el dato, así que el hueco lleva la explicación adentro en
+   vez de dejar una línea muerta que se lea como dato faltante. */
+.ba-cero {
+  display: block;
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--bw);
+  line-height: 11px;
+  padding-left: var(--s2);
+  border-left: 2px solid var(--bw);
+  white-space: nowrap;
+}
+
+/* Dos placas, dos papeles. La cifra va primero porque es lo que se
+   compara; el modelo va después porque es la consecuencia. */
+.vram { list-style: none; margin: 0; padding: 0; }
+.vram li {
+  display: flex; align-items: baseline; gap: var(--s3);
+  padding: var(--s2) 0;
+  border-top: 1px solid var(--grid-minor);
+  font-size: var(--t-small);
+  color: var(--ink-3);
+}
+.vram .num {
+  font-family: var(--face-mono);
+  font-size: var(--t-body);
+  color: var(--bw);
+  min-width: 64px;
+}
+
+/* Ficha de una línea: licencia, contexto, modalidad y fecha. Cuatro
+   datos que no merecen una tabla pero sí una marca de que son ficha
+   técnica y no prosa. */
+.ds-meta {
+  font-size: var(--t-tick);
+  color: var(--ink-3);
+  padding-left: var(--s3);
+  border-left: 2px solid var(--bw-dim);
+  letter-spacing: 0.02em;
+}
+
+/* ── Cara a cara ─────────────────────────────────────────────────
+   Dos columnas y una marca de quién gana cada fila. El ganador va en
+   pleno y el otro apagado: así la tabla se lee de un vistazo sin
+   comparar cadenas de texto una por una. Jev gana una fila y se ve,
+   porque una comparación donde uno barre no se cree.                */
+.vs-tbl th { vertical-align: bottom; }
+.vs-tbl th .hw-mk { display: block; }
+.vs-tbl .vs-que { color: var(--ink-3); }
+.vs-tbl .vs-j, .vs-tbl .vs-l { color: var(--ink-4); font-size: var(--t-small); }
+.vs-tbl tr[data-gana='laya'] .vs-l { color: var(--bw); }
+.vs-tbl tr[data-gana='jev'] .vs-j { color: var(--medido); }
+
+/* Barras de memoria: rojo = no entra. Las filas grises son la
+   capacidad del equipo, la vara contra la que se mide lo demás.   */
+.barra[data-no='true'] .ba-f { background: var(--unreach); }
+.barra[data-no='true'] .ba-m { color: var(--unreach-text); }
+.barra[data-no='true'] .ba-v { color: var(--unreach-text); }
+.barras[data-ancho='true'] .barra { grid-template-columns: 236px 1fr auto; }
+.ba-leyenda span[data-no='true'] { background: var(--unreach); }
+
+/* Conclusión: el párrafo ES la slide, así que va a tamaño de lede
+   pleno y con aire; las negritas cargan las tres ideas. */
+.lede.conclusion { color: var(--ink); line-height: 1.5; }
+.lede.conclusion strong { color: var(--bw); font-weight: 600; }

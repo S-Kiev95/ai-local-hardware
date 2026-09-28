@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es-UY">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El Techo</title>
+<meta name="description" content="Inferencia de IA en hardware propio. El ancho de banda de memoria como variable de decisión.">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/plot.css">
+<link rel="stylesheet" href="css/deck.css">
+<link rel="stylesheet" href="css/slides.css">
+</head>
+<body>
+
+<main class="deck" data-idle="true">
+
+  <div class="stage-wrap">
+    <div class="stage">
+
+      <!-- El plano: un solo instrumento, persistente en todo el deck.
+           Los ejes no se reinician entre slides. -->
+      <div class="plane" data-mode="hero"></div>
+
+      <!-- El cerebro de la portada. Misma capa que el plano; solo uno
+           de los dos está encendido a la vez. -->
+      <div class="cerebro" data-on="false" aria-hidden="true"></div>
+
+      <!-- Carriles: el índice expuesto. Se ve todo el tiempo cuántas
+           secciones faltan y cómo se sostienen entre sí. -->
+      <nav class="rail" aria-label="Índice del deck">
+        <div class="rail-marks"></div>
+        <div class="rail-count mono"></div>
+      </nav>
+
+      <!-- Cartucho de leyenda, donde un paper de HPC pone la suya. -->
+      <div class="legend-block">
+        <span class="lb-name"></span>
+        <span class="lb-meta mono"></span>
+      </div>
+
+      <div class="slides"></div>
+
+      <div class="keys">
+        <span><kbd>←</kbd><kbd>→</kbd> navegar</span>
+        <span><kbd>nº</kbd><kbd>↵</kbd> ir a slide</span>
+        <span><kbd>esc</kbd> índice</span>
+      </div>
+
+      <div class="overview" data-open="false" aria-label="Índice general">
+        <h2 class="title ov-title">Índice</h2>
+        <div class="ov-grid"></div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<noscript>
+  <div class="noscript">
+    <h1>Este documento necesita JavaScript.</h1>
+    <p>Todo el plano y las tablas se computan en el navegador desde una única
+    tabla de datos, para que corregir una cifra redibuje el documento entero.
+    La versión con las fuentes completas está en <code>datos/fuentes.md</code>.</p>
+  </div>
+</noscript>
+
+<!-- Scripts clásicos, en orden de dependencia. Nada de módulos ES:
+     el deck tiene que abrir con doble clic desde el escritorio,
+     sin servidor y sin conexión. -->
+<script src="assets/lib/three.min.js"></script>
+<script src="js/cerebro.js"></script>
+<script src="js/data.js"></script>
+<script src="js/roofline.js"></script>
+<script src="js/slides.js"></script>
+<script src="js/deck.js"></script>
+</body>
+</html>
