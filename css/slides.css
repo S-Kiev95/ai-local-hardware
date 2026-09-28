@@ -758,3 +758,83 @@
    pleno y con aire; las negritas cargan las tres ideas. */
 .lede.conclusion { color: var(--ink); line-height: 1.5; }
 .lede.conclusion strong { color: var(--bw); font-weight: 600; }
+
+
+/* ── Tres curvas (tesis) ─────────────────────────────────────────
+   Colores atados a la lista numerada de la izquierda: 1 teal
+   (inteligencia), 2 ámbar (memoria que se necesita), 3 tinta
+   (memoria que hay). El número de la lista toma el mismo color, así
+   que texto y curva se reconocen sin leyenda.                       */
+.split--tesis { grid-template-columns: 0.9fr 1.1fr; align-items: center; }
+.curvas li:nth-child(1)::before { color: var(--bw); }
+.curvas li:nth-child(2)::before { color: var(--medido); }
+.curvas li:nth-child(3)::before { color: var(--ink-2); }
+
+.tres-curvas { margin: 0; display: flex; flex-direction: column; gap: var(--s3); }
+.tres-curvas svg { width: 100%; height: auto; display: block; overflow: visible; }
+.tc-grid { stroke: var(--grid-minor); stroke-width: 1; }
+.tc-eje { stroke: var(--grid-axis); stroke-width: 1; }
+.tc-anio, .tc-mas {
+  font-family: var(--face-mono); font-size: 13px; fill: var(--ink-4);
+}
+.tc-zona { fill: var(--bw-wash); }
+
+.tc-curva { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.tc-curva[data-tono='bw']     { stroke: var(--bw); }
+.tc-curva[data-tono='medido'] { stroke: var(--medido); }
+.tc-curva[data-tono='ink']    { stroke: var(--ink-2); }
+
+.tc-cruce { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 4; }
+.tc-punto { fill: var(--ink); stroke: var(--ground); stroke-width: 3; }
+.tc-nota {
+  font-size: 20px; font-variation-settings: 'wdth' 100, 'wght' 700; fill: var(--ink);
+}
+.tc-nota-sub { font-size: 14px; fill: var(--ink-2); }
+
+.tc-fin circle { fill: var(--ground); stroke-width: 2; }
+.tc-fin text { font-family: var(--face-mono); font-size: 14px; font-weight: 600; }
+.tc-fin[data-tono='bw'] circle     { stroke: var(--bw); }
+.tc-fin[data-tono='bw'] text       { fill: var(--bw); }
+.tc-fin[data-tono='medido'] circle { stroke: var(--medido); }
+.tc-fin[data-tono='medido'] text   { fill: var(--medido); }
+.tc-fin[data-tono='ink'] circle    { stroke: var(--ink-2); }
+.tc-fin[data-tono='ink'] text      { fill: var(--ink-2); }
+
+.tc-leyenda { display: flex; flex-direction: column; gap: var(--s2); font-size: var(--t-small); color: var(--ink-2); }
+.tc-ley { display: flex; align-items: center; gap: var(--s2); }
+.tc-ley b { font-family: var(--face-mono); font-weight: 600; min-width: 14px; }
+.tc-ley[data-tono='bw'] b     { color: var(--bw); }
+.tc-ley[data-tono='medido'] b { color: var(--medido); }
+.tc-ley[data-tono='ink'] b    { color: var(--ink-2); }
+.tc-dir { font-family: var(--face-mono); color: var(--ink-3); min-width: 14px; }
+.tc-dir[data-dir='sube']::before { content: '↑'; }
+.tc-dir[data-dir='baja']::before { content: '↓'; }
+.tc-aviso { font-family: var(--face-mono); font-size: var(--t-micro); color: var(--ink-4); padding-top: var(--s1); }
+
+/* Las curvas se trazan al entrar a la slide: primero las tres
+   tendencias, después aparece el cruce. Solo pintura (dash offset y
+   opacidad), nada de layout. */
+.slide[data-active='true'] .tc-curva {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: tc-trazar 1.5s var(--ease) forwards;
+}
+.slide[data-active='true'] .tc-curva[data-tono='medido'] { animation-delay: 0.15s; }
+.slide[data-active='true'] .tc-curva[data-tono='ink']    { animation-delay: 0.3s; }
+.slide[data-active='true'] .tc-cruce,
+.slide[data-active='true'] .tc-punto,
+.slide[data-active='true'] .tc-nota,
+.slide[data-active='true'] .tc-nota-sub,
+.slide[data-active='true'] .tc-zona { opacity: 0; animation: tc-aparecer 0.6s var(--ease) 1.6s forwards; }
+@keyframes tc-trazar { to { stroke-dashoffset: 0; } }
+@keyframes tc-aparecer { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .slide[data-active='true'] .tc-curva,
+  .slide[data-active='true'] .tc-cruce,
+  .slide[data-active='true'] .tc-punto,
+  .slide[data-active='true'] .tc-nota,
+  .slide[data-active='true'] .tc-nota-sub,
+  .slide[data-active='true'] .tc-zona { animation: none; opacity: 1; stroke-dashoffset: 0; }
+}
+
+/* El dato del punto 2 toma el color de su curva, no el teal genérico. */
+.curvas li:nth-child(2) .mark { color: var(--medido); }

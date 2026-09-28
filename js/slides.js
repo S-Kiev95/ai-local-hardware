@@ -47,6 +47,76 @@ const leyendaMem = `
     <span data-abierto="false"></span> memoria del equipo
   </p>`;
 
+/* Esquema de las tres tendencias de la tesis. Es ILUSTRATIVO y lo
+   dice: no hay una unidad común entre inteligencia y gigabytes, así
+   que no hay eje Y con números. Lo que sí es exacto es la geometría:
+   las curvas salen de funciones y el cruce 2×3 se calcula, no se
+   dibuja a ojo, así que la marca cae siempre donde las líneas se tocan.
+   Cada curva lleva el número del punto de la lista de la izquierda. */
+const tresCurvas = () => {
+  const W = 700, H = 440, X0 = 40, X1 = 636, Y0 = 44, Y1 = 392;
+  const T0 = 2023, T1 = 2027;
+  const sx = (t) => X0 + ((t - T0) / (T1 - T0)) * (X1 - X0);
+  const sy = (v) => Y1 - v * (Y1 - Y0);
+  const sig = (z) => 1 / (1 + Math.exp(-z));
+  const C = [
+    { k: 1, tono: 'bw', dir: 'sube', txt: 'Inteligencia de los modelos abiertos',
+      f: (t) => 0.10 + 0.78 * sig((t - 2025.9) * 1.8) },
+    { k: 2, tono: 'medido', dir: 'baja', txt: 'Memoria que necesita un modelo capaz',
+      f: (t) => 0.86 - 0.62 * sig((t - 2025.8) * 1.7) },
+    { k: 3, tono: 'ink', dir: 'sube', txt: 'Memoria del hardware accesible',
+      f: (t) => 0.13 + 0.30 * sig((t - 2025.6) * 1.6) },
+  ];
+  const trazo = (f) => {
+    let d = '';
+    for (let i = 0; i <= 96; i++) {
+      const t = T0 + ((T1 - T0) * i) / 96;
+      d += (i ? 'L' : 'M') + sx(t).toFixed(1) + ',' + sy(f(t)).toFixed(1);
+    }
+    return d;
+  };
+  let tc = T1;
+  for (let t = 2025; t <= T1; t += 0.002) {
+    if (C[1].f(t) <= C[2].f(t)) { tc = t; break; }
+  }
+  const xc = sx(tc), yc = sy(C[2].f(tc));
+  const semestre = tc - Math.floor(tc) < 0.5 ? '1S' : '2S';
+  const anios = [2023, 2024, 2025, 2026, 2027];
+  return `
+  <figure class="tres-curvas">
+    <svg viewBox="0 0 ${W} ${H}" role="img"
+      aria-label="Esquema: la inteligencia de los modelos abiertos sube, la memoria que necesita un modelo capaz baja y la memoria del hardware accesible sube; las dos últimas se cruzan en ${semestre} ${Math.floor(tc)}.">
+      ${[0.25, 0.5, 0.75, 1].map((v) => `<line class="tc-grid" x1="${X0}" x2="${X1}" y1="${sy(v)}" y2="${sy(v)}"/>`).join('')}
+      ${anios.map((a) => `
+        <line class="tc-grid" x1="${sx(a)}" x2="${sx(a)}" y1="${Y0}" y2="${Y1}"/>
+        <text class="tc-anio" x="${sx(a)}" y="${Y1 + 24}" text-anchor="middle">${a}</text>`).join('')}
+      <line class="tc-eje" x1="${X0}" x2="${X1}" y1="${Y1}" y2="${Y1}"/>
+      <text class="tc-mas" x="${X0}" y="${Y0 - 14}">↑ más</text>
+      <rect class="tc-zona" x="${xc}" y="${Y0}" width="${X1 - xc}" height="${Y1 - Y0}"/>
+      ${C.map((c) => `<path class="tc-curva" data-tono="${c.tono}" d="${trazo(c.f)}" pathLength="1"/>`).join('')}
+      <line class="tc-cruce" x1="${xc}" x2="${xc}" y1="${Y0 - 4}" y2="${yc}"/>
+      <circle class="tc-punto" cx="${xc}" cy="${yc}" r="6"/>
+      <text class="tc-nota" x="${xc - 10}" y="${Y0 + 6}" text-anchor="end">${semestre} ${Math.floor(tc)}</text>
+      <text class="tc-nota-sub" x="${xc - 10}" y="${Y0 + 26}" text-anchor="end">un modelo capaz ya entra</text>
+      <text class="tc-nota-sub" x="${xc - 10}" y="${Y0 + 44}" text-anchor="end">en hardware accesible</text>
+      ${C.map((c) => {
+        const y = sy(c.f(T1));
+        return `<g class="tc-fin" data-tono="${c.tono}">
+          <circle cx="${X1}" cy="${y}" r="13"/>
+          <text x="${X1}" y="${y + 5}" text-anchor="middle">${c.k}</text>
+        </g>`;
+      }).join('')}
+    </svg>
+    <figcaption class="tc-leyenda">
+      ${C.map((c) => `
+        <span class="tc-ley" data-tono="${c.tono}">
+          <b>${c.k}</b><span class="tc-dir" data-dir="${c.dir}"></span>${c.txt}
+        </span>`).join('')}
+      <span class="tc-aviso">Esquema de tendencias, sin escala. Las cifras están en las slides que siguen.</span>
+    </figcaption>
+  </figure>`;
+};
+
 const contra = (t) => `<p class="contra"><b>El contra.</b> ${t}</p>`;
 
 /* Franja de logos. Cada uno se carga solo si el archivo existe; los
@@ -179,14 +249,14 @@ const SLIDES = [
 
 {
   id: 'tesis', sec: 'Apertura', nav: 'La tesis',
-  plot: () => ({
-    rect: RECTS.present, mode: 'present',
-    /* Todas las opciones de hardware, no solo los dos extremos. */
-    ceilings: techosDe(HARDWARE.map((h) => h.id), 'rtx5090', null, { sinEtiqueta: true }),
-    markers: marcadoresTecho(HARDWARE.map((h) => h.id), 'rtx5090'),
-  }),
+  /* Antes llevaba el plano con los diez techos de hardware: exacto,
+     pero ilegible para quien no lee log-log. El título promete tres
+     curvas que se cruzan, así que eso es lo que se dibuja. */
+  plot: () => ({ mode: 'quiet', ceilings: [], markers: [] }),
+  layout: 'wide',
   title: 'Tres curvas se cruzaron.',
   body: () => `
+    <div class="split split--tesis">
     <div class="stack-lg">
       <p class="lede">
         En la segunda mitad de 2026 las cosas empezaron a cambiar y convergen
@@ -213,6 +283,8 @@ const SLIDES = [
       </ol>
       <p>El cuello de botella que separa a las grandes empresas de AI de las
       pequeñas y consumidores <strong>se está moviendo</strong>.</p>
+    </div>
+    ${tresCurvas()}
     </div>`,
 },
 
